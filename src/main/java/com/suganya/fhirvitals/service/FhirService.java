@@ -9,9 +9,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-// @Service marks this as a class holding business logic - the "what do
-// we actually DO with the data" layer, separate from web-handling
+// @Service - class holding business logic separate from web-handling
 // (Controller) and data-shape (Entity) concerns.
 @Service
 public class FhirService {
@@ -19,22 +20,60 @@ public class FhirService {
     private final WebClient webClient;
     private final ObservationRepository repository;
 
-    // @Autowired: "Spring, please give me the WebClient bean and the
-    // repository you already know how to build, and wire them into
-    // this class automatically." We never call "new WebClient()" or
-    // "new ObservationRepository()" ourselves - Spring handles that.
+    // @Autowired: gives the WebClient bean and the
+    // repository and wire them into
+    // this class automatically.
     @Autowired
     public FhirService(WebClient webClient, ObservationRepository repository) {
         this.webClient = webClient;
         this.repository = repository;
     }
 
-    // Equivalent to your Python script's "query the endpoint to verify
-    // if the record was created" step - but here, we also parse the
-    // result and save each Observation into our local database.
+    public String createPatient(){
+        
+        Map<String,Object> nameData = new HashMap<>();
+        nameData.put("use", "official");
+        nameData.put("family", "Kumar");
+        nameData.put("given",List.of("Meena"));
+        nameData.put("prefix", List.of("Mrs"));
+
+        Map<String,Object> telecomData = new HashMap<>();   
+        telecomData.put("system","email");
+        telecomData.put("value", "meenaraju@example.com"); 
+
+        Map<String,Object> addressData = new HashMap<>();   
+        addressData.put("use","home");
+        addressData.put("type", "postal");
+        addressData.put("line", List.of("123 Main St"));    
+        addressData.put("city", "Anytown");
+        addressData.put("state", "MS"); 
+
+        // Map<String,Object> generalPractitionerData = new HashMap<>();  
+        // generalPractitionerData.put("reference", "Practitioner/137767593"); 
+
+        Map<String,Object> patientData = new HashMap<>();
+        patientData.put("resourceType", "Patient");
+        patientData.put("active", true);
+        patientData.put("name", List.of(nameData));
+        patientData.put("telecom", List.of(telecomData));
+        patientData.put("gender", "female");
+        patientData.put("birthDate", "1982-05-29");
+        patientData.put("address", List.of(addressData));
+        // patientData.put("generalPractitioner", List.of(generalPractitionerData));
+        
+        JsonNode response = webClient.post()
+                .uri("/Patient")
+                .bodyValue(patientData)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+        return response.path("id").asText();
+    }
+    // query the endpoint to verify if the record was created
+    // also parse the result and save each Observation into our local database.
     public List<ObservationRecord> fetchAndSaveObservationsForPatient(String patientId) {
 
-        // This is the WebClient equivalent of:
+        // This is the WebClient equivalent to
         //   requests.get(f"{BASE_URL}/Observation?subject=Patient/{patient_id}")
         JsonNode response = webClient.get()
                 .uri("/Observation?subject=Patient/{id}", patientId)
@@ -66,7 +105,7 @@ public class FhirService {
             ObservationRecord record = new ObservationRecord(fhirId, patientId, code, value, unit);
 
             // repository.save(...) - this is the line that turns into
-            // a real SQL INSERT statement, generated for us by Spring Data JPA.
+            // a real SQL INSERT statement, generated for by Spring Data JPA.
             saved.add(repository.save(record));
         }
 

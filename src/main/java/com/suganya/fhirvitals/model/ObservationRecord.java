@@ -6,12 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
-// @Entity tells Spring: "this Java class represents a table in the database"
+// @Entity tells Spring this Java class represents a table in the database
 @Entity
 public class ObservationRecord {
 
     // @Id marks the primary key. @GeneratedValue means the database
-    // auto-assigns the number - we never set this ourselves.
+    // auto-assigns the number
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,10 +25,7 @@ public class ObservationRecord {
     // What was measured (e.g. "Heart rate", "Body temperature")
     private String observationCode;
 
-    // The measured value (kept simple as a String for readability)
-    // "value" is a reserved SQL keyword in H2 - @Column tells Hibernate
-    // to store this field under a different, safe column name in the
-    // actual database, while our Java code still just calls it "value".
+    // "Value" cannot be used as a field name as it is reseverd in JAva
     @Column(name = "measurement_value")
     private String value;
 
@@ -49,8 +46,6 @@ public class ObservationRecord {
     }
 
     // Getters and setters - Spring/JPA use these to read and write each field.
-    // (An IDE can generate all of these for you automatically - you don't
-    // type them by hand in real projects.)
 
     public Long getId() {
         return id;

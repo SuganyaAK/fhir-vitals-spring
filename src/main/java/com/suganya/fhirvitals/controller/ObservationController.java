@@ -33,4 +33,5 @@ public class ObservationController {
     public List<ObservationRecord> getAll() {
         return fhirService.getAllSavedObservations();
     }
+    
 }
